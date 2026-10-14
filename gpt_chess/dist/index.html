@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#232923">
+  <meta name="description" content="An unhurried game of chess in a gilded mountain kingdom. Ivory and obsidian. Two players, one beautiful place.">
+  <title>The Gilded Vale · Chess</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./assets/vale.webp" as="image">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div class="world-backdrop" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <a href="#board-grid" class="skip-link">Go to chessboard</a>
+  <header class="masthead">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">♜</span><div><h1>The Gilded Vale</h1><span class="eyebrow">A place to play, a moment to stay</span></div></div>
+    <div class="header-actions"><span class="local-badge"><i></i> Two players · shared device</span><button id="new-game" class="text-button"><span data-icon="plus"></span>New game</button></div>
+  </header>
+
+  <main id="game-shell">
+    <div class="players" aria-label="Players and clocks">
+      <section class="player-panel active" id="player-w" aria-label="Ivory player">
+        <span class="player-emblem ivory" aria-hidden="true">♔</span>
+        <div class="player-identity"><span class="player-side">WHITE · IVORY</span><strong id="name-w">Ivory</strong><div class="captures" id="captures-w" aria-label="Pieces captured by Ivory"></div></div>
+        <div class="clock-group"><span id="clock-w" class="clock" aria-label="Ivory clock">∞</span><span class="clock-caption" id="caption-w">YOUR MOVE</span></div>
+      </section>
+      <div class="venue"><span class="venue-line"></span><span>THE CASTLE TERRACE</span><span class="venue-line"></span></div>
+      <section class="player-panel" id="player-b" aria-label="Obsidian player">
+        <span class="player-emblem obsidian" aria-hidden="true">♚</span>
+        <div class="player-identity"><span class="player-side">BLACK · OBSIDIAN</span><strong id="name-b">Obsidian</strong><div class="captures" id="captures-b" aria-label="Pieces captured by Obsidian"></div></div>
+        <div class="clock-group"><span id="clock-b" class="clock" aria-label="Obsidian clock">∞</span><span class="clock-caption" id="caption-b">WAITING</span></div>
+      </section>
+    </div>
+
+    <div class="scene-space">
+      <div class="scene-board" id="scene-board">
+        <img class="scene-image" src="./assets/vale.webp" alt="A gilded marble chessboard on an ivy-covered terrace above waterfalls and mountain castles at sunset" draggable="false">
+        <svg class="board-grid" id="board-grid" role="grid" tabindex="-1" aria-label="Chessboard. Arrow keys navigate; Enter selects a piece or moves it." aria-rowcount="8" aria-colcount="8"></svg>
+        <div class="piece-layer"></div>
+        <div class="motes" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="loading-note" id="loading-note" role="status">Opening the terrace…</div>
+      <div class="pause-cover" id="pause-cover" hidden><span class="eyebrow">A MOMENT OF STILLNESS</span><h2>Game paused</h2><p>The board will be here when you are.</p><button class="primary-button" id="resume-game">Resume together</button></div>
+    </div>
+
+    <div class="turn-tray">
+      <span class="turn-gem" id="turn-gem" aria-hidden="true"></span>
+      <div><p id="turn-heading">Ivory to move</p><p id="turn-instruction">Choose a piece. Find your next move.</p></div>
+      <span id="move-count" class="move-count">MOVE 01</span>
+    </div>
+  </main>
+
+  <footer class="toolbar" aria-label="Game controls">
+    <div class="tool-group">
+      <button id="toggle-view" class="tool-button" title="Switch to tactical view (V)"><span data-icon="grid"></span><span class="tool-label">Tactical view</span></button>
+      <button id="flip-board" class="tool-button" title="Flip the board (F)"><span data-icon="flip"></span><span class="tool-label">Flip board</span></button>
+      <span class="tool-divider"></span>
+      <button id="toggle-sound" class="tool-button" aria-pressed="false" title="Enable waterfall ambience and piece sounds"><span data-icon="mute"></span><span class="tool-label">Sound off</span></button>
+    </div>
+    <div class="tool-group central-tools">
+      <button id="takeback" class="icon-button" title="Request a takeback" aria-label="Request a takeback" disabled><span data-icon="undo"></span></button>
+      <button id="pause" class="icon-button" title="Pause by agreement" aria-label="Pause by agreement"><span data-icon="pause"></span></button>
+      <button id="open-journal" class="tool-button" title="Open move journal"><span data-icon="book"></span><span class="tool-label">Journal</span></button>
+    </div>
+    <div class="tool-group">
+      <button id="immersive" class="icon-button" aria-label="Hide interface for immersion (I)" title="Immersive mode (I)" aria-pressed="false"><span data-icon="eye"></span></button>
+      <button id="fullscreen" class="icon-button" aria-label="Enter fullscreen" title="Fullscreen"><span data-icon="expand"></span></button>
+      <button id="settings" class="icon-button" aria-label="Game settings" title="Settings"><span data-icon="settings"></span></button>
+      <button id="help" class="icon-button" aria-label="How to play and keyboard controls" title="How to play"><span data-icon="help"></span></button>
+    </div>
+  </footer>
+  <button id="leave-immersive" class="immersive-exit" hidden><span data-icon="eye"></span>Show controls</button>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <div class="sr-only" id="announcement" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <dialog id="new-dialog" class="modal">
+    <form id="new-form">
+      <div class="dialog-topline"><span class="eyebrow">A NEW CHAPTER</span><button type="button" class="icon-button close-dialog" aria-label="Close"><span data-icon="close"></span></button></div>
+      <h2>Meet at the board.</h2><p class="dialog-intro">Two players. One device. All the time you choose.</p>
+      <div class="name-fields"><label>Ivory · White<input name="white" maxlength="24" value="Ivory" autocomplete="off"></label><label>Obsidian · Black<input name="black" maxlength="24" value="Obsidian" autocomplete="off"></label></div>
+      <fieldset><legend>Set the pace</legend><div class="pace-options">
+        <label><input type="radio" name="control" value="none" checked><span>Unhurried<small>No clock</small></span></label>
+        <label><input type="radio" name="control" value="3+2"><span>3 + 2<small>Quick</small></span></label>
+        <label><input type="radio" name="control" value="5+3"><span>5 + 3<small>Blitz</small></span></label>
+        <label><input type="radio" name="control" value="10+5"><span>10 + 5<small>Thoughtful</small></span></label>
+        <label><input type="radio" name="control" value="15+10"><span>15 + 10<small>Leisurely</small></span></label>
+      </div></fieldset>
+      <p class="fine-print">Minutes per player + seconds added after each move. The clock starts after White’s first move. Starting a game replaces the current board.</p>
+      <button type="submit" class="primary-button full-width">Begin a new game <span aria-hidden="true">↗</span></button>
+    </form>
+  </dialog>
+
+  <dialog id="settings-dialog" class="modal">
+    <div class="dialog-topline"><span class="eyebrow">MAKE YOURSELF AT HOME</span><button class="icon-button close-dialog" aria-label="Close"><span data-icon="close"></span></button></div>
+    <h2>The way you play.</h2>
+    <label class="setting-row"><span><strong>Legal move guides</strong><small>Light the squares your selected piece can reach.</small></span><input type="checkbox" id="legal-guides" checked></label>
+    <label class="setting-row"><span><strong>Last move markers</strong><small>Keep both players oriented after each turn.</small></span><input type="checkbox" id="last-markers" checked></label>
+    <label class="setting-row"><span><strong>Turn the board after each move</strong><small>Bring the next player’s pieces to the near side.</small></span><input type="checkbox" id="auto-flip"></label>
+    <label class="setting-row"><span><strong>Quiet scenery</strong><small>Still the floating light and piece animations.</small></span><input type="checkbox" id="quiet-motion"></label>
+    <div class="setting-row"><span><strong>Terrace light</strong><small>A change in atmosphere, whenever you like.</small></span><div class="light-options"><button type="button" id="golden-light" class="choice-button active" aria-pressed="true" title="Golden hour"><span data-icon="sun"></span></button><button type="button" id="evening-light" class="choice-button" aria-pressed="false" title="Blue hour"><span data-icon="moon"></span></button></div></div>
+    <button type="button" id="view-reference" class="secondary-button full-width">View the original reference</button>
+  </dialog>
+
+  <dialog id="journal-dialog" class="modal journal-modal">
+    <div class="dialog-topline"><span class="eyebrow">THE STORY SO FAR</span><button class="icon-button close-dialog" aria-label="Close"><span data-icon="close"></span></button></div>
+    <h2>Move journal</h2><p class="dialog-intro" id="journal-description">Every move, a little history.</p>
+    <div class="move-table"><div class="move-table-heading"><span>TURN</span><span>IVORY</span><span>OBSIDIAN</span></div><div id="move-list"></div></div>
+    <div class="journal-actions"><button id="export-pgn" class="secondary-button"><span data-icon="download"></span>Export PGN</button><button id="offer-draw" class="secondary-button">Offer a draw</button><button id="resign" class="danger-button"><span data-icon="flag"></span>Resign</button></div>
+    <p class="fine-print">Saved on this browser. Clocks continue while the journal is open.</p>
+  </dialog>
+
+  <dialog id="confirm-dialog" class="modal compact-modal">
+    <span class="eyebrow" id="confirm-kicker">BY AGREEMENT</span><h2 id="confirm-title"></h2><p class="dialog-intro" id="confirm-message"></p>
+    <div class="dialog-buttons"><button id="confirm-no" class="secondary-button">Keep playing</button><button id="confirm-yes" class="primary-button">Accept</button></div>
+  </dialog>
+  <dialog id="promotion-dialog" class="modal compact-modal">
+    <span class="eyebrow">A PAWN’S NEXT CHAPTER</span><h2>Choose your promotion.</h2><p class="dialog-intro">Your clock keeps running until you choose.</p><div id="promotion-choices" class="promotion-choices"></div>
+  </dialog>
+  <dialog id="result-dialog" class="modal compact-modal">
+    <div class="dialog-topline"><span class="eyebrow">THE FINAL MOVE</span><button class="icon-button close-dialog" aria-label="Close"><span data-icon="close"></span></button></div>
+    <div class="result-crown" aria-hidden="true">♔</div><h2 id="result-title"></h2><p id="result-reason" class="dialog-intro"></p>
+    <div class="dialog-buttons"><button id="review-game" class="secondary-button">Review game</button><button id="play-again" class="primary-button">Play again</button></div>
+  </dialog>
+  <dialog id="help-dialog" class="modal">
+    <div class="dialog-topline"><span class="eyebrow">YOUR SEAT AT THE TABLE</span><button class="icon-button close-dialog" aria-label="Close"><span data-icon="close"></span></button></div>
+    <h2>A little guidance.</h2><p class="dialog-intro">A local chess game for two people sharing this screen.</p>
+    <div class="help-section"><h3>Make a move</h3><p>Select one of your pieces, then select a lit square. You can also drag a piece onto its destination. Select it again or press Escape to cancel. Hover over a sculpture to identify it.</p></div>
+    <div class="help-section"><h3>Find your perspective</h3><p>Use Tactical view for familiar, clear silhouettes and a square board. Flip the board for the other player, or enable automatic turning in Settings. On a small screen, tactical view opens by default.</p></div>
+    <div class="shortcut-grid"><span>Navigate squares</span><kbd>Arrow keys</kbd><span>Select / move</span><kbd>Enter / Space</kbd><span>Flip board</span><kbd>F</kbd><span>Change view</span><kbd>V</kbd><span>Immersive mode</span><kbd>I</kbd><span>Cancel selection / exit immersion</span><kbd>Esc</kbd></div>
+    <div class="help-section"><h3>A fair game</h3><p>Castling, en passant, promotion, check and checkmate are supported. Stalemate, insufficient material, threefold repetition and the fifty-move rule end the game automatically. Takebacks, pauses and agreed draws ask for both players’ agreement. Clocks continue in background tabs and through reloads, unless both players pause.</p></div>
+  </dialog>
+  <dialog id="reference-dialog" class="modal reference-modal">
+    <div class="dialog-topline"><span class="eyebrow">THE ORIGINAL REFERENCE</span><button class="icon-button close-dialog" aria-label="Close"><span data-icon="close"></span></button></div>
+    <img src="./assets/reference-sharp.jpeg" alt="The supplied high-resolution reference: sculpted fantasy chess pieces on an ornate marble board among castles and waterfalls" width="2048" height="1143" loading="lazy">
+    <p class="fine-print">The supplied 2048 × 1143 reference. The playable scene and sculptures have been recreated from it; they are not pixel-identical.</p>
+  </dialog>
+  <noscript><div class="fatal-error">This chess game needs JavaScript enabled to move pieces and enforce the rules.</div></noscript>
+</body>
+</html>
