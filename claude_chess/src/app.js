@@ -334,11 +334,14 @@ class Game3D {
 
   playMove(m, { dragged = false } = {}) {
     const g = this.game;
+    // Settle the mover before the rules engine switches turns. Input can arrive
+    // before the next animation frame, including after a throttled background.
+    this.tickClock(performance.now());
+    if (g.result) return;
     const mover = g.turn();
     const info = g.play(m);
     if (!info) return;
     if (this.clock && !g.result) {
-      this.tickClock(performance.now());
       this.clock.ms[mover] += this.clock.inc;
       this.clock.running = true; this.clock.last = performance.now();
     }
