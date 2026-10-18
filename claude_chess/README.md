@@ -37,4 +37,5 @@ In a two-player game the camera turns to whoever moves next and the pieces turn 
 ```
 python3 build.py      # regenerates index.html
 node test/perft.js    # runs the engine tests
+node --test test/clocks.js # runs controller clock-boundary regressions
 ```
